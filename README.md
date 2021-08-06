@@ -6,7 +6,7 @@ Camera Gizmo useful for changing camera-angles or if using a mousepad for in edi
 
 This Bevy plugin adds a transform gizmo to entities in the scene, allowing you to drag and rotate meshes with your mouse.
 
-![image](https://user-images.githubusercontent.com/25123512/128579461-538723fe-f091-4701-85bc-2dafa2a73462.png)
+![image](https://user-images.githubusercontent.com/25123512/128580191-2f62f29a-0886-4fc7-9367-9a21c56fa1de.png)
 
 # Demo
 
