@@ -2,6 +2,8 @@
 
 This Bevy plugin adds a transform gizmo to entities in the scene, allowing you to drag and rotate meshes with your mouse.
 
+![image](https://user-images.githubusercontent.com/25123512/128579461-538723fe-f091-4701-85bc-2dafa2a73462.png)
+
 # Demo
 
 Run a minimal implementation of the gizmo by cloning this repository and running:
