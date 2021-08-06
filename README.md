@@ -1,5 +1,7 @@
 # Bevy Camera Gizmo
 
+This is a modified version of [bevy_transform_gizmo](https://github.com/ForesightMiningSoftwareCorporation/bevy_transform_gizmo).
+
 This Bevy plugin adds a transform gizmo to entities in the scene, allowing you to drag and rotate meshes with your mouse.
 
 ![image](https://user-images.githubusercontent.com/25123512/128579461-538723fe-f091-4701-85bc-2dafa2a73462.png)
