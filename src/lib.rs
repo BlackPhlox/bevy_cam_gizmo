@@ -415,9 +415,16 @@ fn build_gizmo(
             parent
                 .spawn_bundle(PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-                material: materials.add(Color::rgb(0.6,0.6,0.6).into()),
+                material: materials.add(Color::rgb(0.9,0.9,0.9).into()),
                 ..Default::default()
-            });
+            })
+            .insert(PickableGizmo::default())
+            //Does not work currently, only uses one of TransformGizmoInteraction
+            .insert(TransformGizmoInteraction::RotateAxis(Vec3::X))
+            .insert(TransformGizmoInteraction::RotateAxis(Vec3::Y))
+            .insert(TransformGizmoInteraction::RotateAxis(Vec3::Z))
+            .insert(GizmoPass)
+            .remove::<MainPass>();
             // Translation Axes
             /*
             parent
