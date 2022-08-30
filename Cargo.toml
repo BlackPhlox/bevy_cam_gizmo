@@ -17,6 +17,9 @@ version = "0.8"
 features = ["render"]
 default-features = false
 
+[dev-dependencies]
+bevy_mod_picking = "0.9"
+
 [dev-dependencies.bevy]
 version = "0.8"
 features = ["bevy_asset", "bevy_scene", "bevy_winit", "bevy_gltf", "png"]

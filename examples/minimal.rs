@@ -6,6 +6,7 @@ use bevy_dolly::prelude::*;
 
 use bevy_dolly::helpers::cursor_grab::DollyCursorGrab;
 use bevy_dolly::prelude::cone::Cone;
+use bevy_mod_picking::{PickingEvent, SelectionEvent, HoverEvent, PickableBundle, DefaultPickingPlugins, PickingCameraBundle};
 
 #[derive(Component)]
 struct MainCamera;
@@ -14,11 +15,13 @@ fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
-        .add_plugin(DollyCursorGrab)
+        .add_plugins(DefaultPickingPlugins)
+        //.add_plugin(DollyCursorGrab)
         .add_dolly_component(MainCamera)
         .add_state(Pan::Keys)
         .add_startup_system(setup)
         .add_system(update_camera)
+        .add_system(handle_picking_events)
         .run();
 }
 
@@ -91,6 +94,7 @@ fn setup(
             ..default()
         }))
         .with_children(|cell| {
+            
             // +X
             cell.spawn_bundle(PbrBundle {
                 mesh: cone_mesh.clone(),
@@ -101,7 +105,8 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            });
+            }).insert_bundle(PickableBundle::default());
+
             // -X
             cell.spawn_bundle(PbrBundle {
                 mesh: cone_mesh.clone(),
@@ -112,7 +117,7 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            });
+            }).insert_bundle(PickableBundle::default());
 
             // +Y
             cell.spawn_bundle(PbrBundle {
@@ -124,7 +129,8 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            });
+            }).insert_bundle(PickableBundle::default());
+
             // -Y
             cell.spawn_bundle(PbrBundle {
                 mesh: cone_mesh.clone(),
@@ -135,7 +141,7 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            });
+            }).insert_bundle(PickableBundle::default());
 
             // +Z
             cell.spawn_bundle(PbrBundle {
@@ -147,7 +153,7 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            });
+            }).insert_bundle(PickableBundle::default());
 
             // -Z
             cell.spawn_bundle(PbrBundle {
@@ -159,7 +165,7 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            });
+            }).insert_bundle(PickableBundle::default());
         });
 
     commands
@@ -184,13 +190,37 @@ fn setup(
         ..default()
     };
 
-    commands.spawn_bundle(camera).insert(MainCamera);
+    commands.spawn_bundle(camera).insert(MainCamera).insert_bundle(PickingCameraBundle::default());
 
     // light
     commands.spawn_bundle(PointLightBundle {
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
+}
+
+pub fn handle_picking_events(
+    mut events: EventReader<PickingEvent>,
+    mut commands: Commands,
+    mouse_button_input: Res<Input<MouseButton>>,
+) {
+    for event in events.iter() {
+        let entity = match event {
+            PickingEvent::Selection(SelectionEvent::JustSelected(e)) => e,
+            PickingEvent::Selection(SelectionEvent::JustDeselected(e)) => e,
+            PickingEvent::Hover(HoverEvent::JustEntered(e)) => e,
+            PickingEvent::Hover(HoverEvent::JustLeft(e)) => e,
+            PickingEvent::Clicked(e) => e,
+        };
+
+        //println!("Entity: {:?}", entity);
+
+        /*if mouse_button_input.pressed(MouseButton::Left) {
+            commands.entity(*entity).insert(PressedKey);
+        } else {
+            commands.entity(*entity).remove::<PressedKey>();
+        }*/
+    }
 }
 
 #[allow(unused_must_use)]
