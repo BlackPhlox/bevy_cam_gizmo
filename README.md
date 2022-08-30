@@ -2,7 +2,7 @@
 
 Camera Gizmo useful for changing camera-angles or if using a mousepad for in editors.
 
-![image](https://user-images.githubusercontent.com/25123512/128580191-2f62f29a-0886-4fc7-9367-9a21c56fa1de.png)
+![bevy_cam_gizmo](https://user-images.githubusercontent.com/25123512/187547925-53292eb7-3ece-4846-b208-68e0fe302cac.png)
 
 # Demo
 
