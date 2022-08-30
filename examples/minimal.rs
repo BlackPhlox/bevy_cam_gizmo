@@ -18,18 +18,23 @@ use bevy_mod_picking::{
 #[derive(Component)]
 struct MainCamera;
 
+#[derive(Component)]
+struct M2Camera;
+
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugins(DefaultPickingPlugins)
         //.add_plugin(DollyCursorGrab)
-        .add_dolly_component(MainCamera)
+        .add_system(dolly_component_cam_change_detection::<MainCamera>.label("1"))//add_dolly_component(MainCamera)
+        .add_system(dolly_component_cam_change_detection::<M2Camera>.label("2").after("1"))//.add_dolly_component(M2Camera)
         .add_state(Pan::Keys)
         .add_startup_system(setup)
-        .add_system(update_camera)
         .add_system(set_camera_viewports)
-        .add_system(handle_picking_events)
+        .add_system(update_camera.after("1").before("2"))
+        .add_system(update_other_cam.after("2"))
+        //.add_system(handle_picking_events)
         .run();
 }
 
@@ -184,12 +189,13 @@ fn setup(
                 .with(Arm::new(Vec3::Z * 4.0))
                 .build(),
         )
-        .insert(MainCamera);
+        .insert(MainCamera).insert(M2Camera);
 
     let camera = Camera3dBundle {
-        projection: OrthographicProjection {
-            scale: 1.0,
-            scaling_mode: ScalingMode::FixedVertical(1.0),
+        projection: PerspectiveProjection {
+            fov: 0.2,
+            //scale: 1.0,
+            //scaling_mode: ScalingMode::FixedVertical(1.0),
             ..default()
         }
         .into(),
@@ -227,7 +233,7 @@ fn setup(
     commands.spawn_bundle(Camera3dBundle {
         transform: Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
-    });
+    }).insert(M2Camera);//.insert(MainCamera);
 }
 
 fn set_camera_viewports(
@@ -279,6 +285,15 @@ pub fn handle_picking_events(
     }
 }
 
+fn update_other_cam(
+    mut query: ParamSet<(Query<(&mut Transform, With<M2Camera>)>, Query<&mut Rig>)>,
+){
+    let mut binding = query.p1();
+    let mut a = binding.single_mut();
+    let p = a.driver_mut::<Position>();
+    p.position = Vec3::new(0.,-5.,0.);
+}
+
 #[allow(unused_must_use)]
 fn update_camera(
     keys: Res<Input<KeyCode>>,
@@ -309,6 +324,9 @@ fn update_camera(
             -0.1 * delta.y * sensitivity.y,
         );
     }
+
+    let p = rig.driver_mut::<Position>();
+    p.position = Vec3::new(0.,0.,0.);
 
     if keys.just_pressed(KeyCode::E) {
         let result = if pan.current().eq(&Pan::Keys) {
