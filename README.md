@@ -14,6 +14,12 @@ cargo run --release --example minimal
 ```
 
 # Features
+### Current
+- Toggle orbit camera with <kbd>E</kbd>
+
+### Planned
+- Click a cone to snap to the respective axis.
+- Click in the middle to toggle between Perspective and Orthographic camera view.
 
 # Usage
 
