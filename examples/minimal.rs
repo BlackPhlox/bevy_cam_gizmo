@@ -1,12 +1,19 @@
 use std::f64::consts::FRAC_2_PI;
 
+use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::prelude::*;
+use bevy::render::camera::Viewport;
+use bevy::render::view::VisibleEntities;
+use bevy::window::{WindowId, WindowResized};
 use bevy::{input::mouse::MouseMotion, render::camera::ScalingMode};
 use bevy_dolly::prelude::*;
 
 use bevy_dolly::helpers::cursor_grab::DollyCursorGrab;
 use bevy_dolly::prelude::cone::Cone;
-use bevy_mod_picking::{PickingEvent, SelectionEvent, HoverEvent, PickableBundle, DefaultPickingPlugins, PickingCameraBundle};
+use bevy_mod_picking::{
+    DefaultPickingPlugins, HoverEvent, PickableBundle, PickingCameraBundle, PickingEvent,
+    SelectionEvent,
+};
 
 #[derive(Component)]
 struct MainCamera;
@@ -21,6 +28,7 @@ fn main() {
         .add_state(Pan::Keys)
         .add_startup_system(setup)
         .add_system(update_camera)
+        .add_system(set_camera_viewports)
         .add_system(handle_picking_events)
         .run();
 }
@@ -38,13 +46,6 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    // plane
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        ..default()
-    });
-
     let cone_mesh = meshes.add(Mesh::from(Cone {
         height: 0.3,
         radius: 0.1,
@@ -90,11 +91,10 @@ fn setup(
     commands
         .spawn_bundle(SpatialBundle::from_transform(Transform {
             rotation: Quat::IDENTITY,
-            translation: Vec3::new(0., 0.2, 0.),
+            translation: Vec3::new(0., -5., 0.),
             ..default()
         }))
         .with_children(|cell| {
-            
             // +X
             cell.spawn_bundle(PbrBundle {
                 mesh: cone_mesh.clone(),
@@ -105,7 +105,8 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            }).insert_bundle(PickableBundle::default());
+            })
+            .insert_bundle(PickableBundle::default());
 
             // -X
             cell.spawn_bundle(PbrBundle {
@@ -117,7 +118,8 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            }).insert_bundle(PickableBundle::default());
+            })
+            .insert_bundle(PickableBundle::default());
 
             // +Y
             cell.spawn_bundle(PbrBundle {
@@ -129,7 +131,8 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            }).insert_bundle(PickableBundle::default());
+            })
+            .insert_bundle(PickableBundle::default());
 
             // -Y
             cell.spawn_bundle(PbrBundle {
@@ -141,7 +144,8 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            }).insert_bundle(PickableBundle::default());
+            })
+            .insert_bundle(PickableBundle::default());
 
             // +Z
             cell.spawn_bundle(PbrBundle {
@@ -153,7 +157,8 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            }).insert_bundle(PickableBundle::default());
+            })
+            .insert_bundle(PickableBundle::default());
 
             // -Z
             cell.spawn_bundle(PbrBundle {
@@ -165,13 +170,15 @@ fn setup(
                     ..default()
                 },
                 ..default()
-            }).insert_bundle(PickableBundle::default());
+            })
+            .insert_bundle(PickableBundle::default());
         });
 
     commands
         .spawn()
         .insert(
             Rig::builder()
+                .with(Position::new(Vec3::new(0., -5., 0.)))
                 .with(YawPitch::new().yaw_degrees(45.0).pitch_degrees(-30.0))
                 .with(Smooth::new_rotation(1.5))
                 .with(Arm::new(Vec3::Z * 4.0))
@@ -181,22 +188,71 @@ fn setup(
 
     let camera = Camera3dBundle {
         projection: OrthographicProjection {
-            scale: 3.0,
-            scaling_mode: ScalingMode::FixedVertical(2.0),
+            scale: 1.0,
+            scaling_mode: ScalingMode::FixedVertical(1.0),
             ..default()
         }
         .into(),
         transform: Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        camera_3d: Camera3d {
+            clear_color: ClearColorConfig::None,
+            ..Default::default()
+        },
+        camera: Camera {
+            priority: 1,
+            ..Default::default()
+        },
         ..default()
     };
 
-    commands.spawn_bundle(camera).insert(MainCamera).insert_bundle(PickingCameraBundle::default());
+    commands
+        .spawn_bundle(camera)
+        .insert(MainCamera)
+        .insert_bundle(PickingCameraBundle::default());
 
     // light
     commands.spawn_bundle(PointLightBundle {
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
+
+    // plane
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        ..default()
+    });
+
+    // camera
+    commands.spawn_bundle(Camera3dBundle {
+        transform: Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ..default()
+    });
+}
+
+fn set_camera_viewports(
+    windows: Res<Windows>,
+    mut resize_events: EventReader<WindowResized>,
+    mut right_camera: Query<&mut Camera, With<MainCamera>>,
+) {
+    for resize_event in resize_events.iter() {
+        if resize_event.id == WindowId::primary() {
+            let window = windows.primary();
+
+            let mut right_camera = right_camera.single_mut();
+            right_camera.viewport = Some(Viewport {
+                physical_position: UVec2::new(
+                    window.physical_width() / 2 + window.physical_width() / 3,
+                    0,
+                ),
+                physical_size: UVec2::new(
+                    window.physical_width() / 5,
+                    window.physical_height() / 4,
+                ),
+                depth: 0.0..1.0,
+            });
+        }
+    }
 }
 
 pub fn handle_picking_events(
