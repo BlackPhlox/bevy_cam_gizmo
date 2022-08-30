@@ -1,6 +1,6 @@
 # Bevy Camera Gizmo
 
-Camera Gizmo useful for changing camera-angles or if using a mousepad in a editor.</br>
+Camera Gizmo useful for changing camera-angles or if using a mousepad in an editor.</br>
 Powered by [`bevy_dolly`](https://github.com/BlackPhlox/bevy_dolly)
 
 ![bevy_cam_gizmo](https://user-images.githubusercontent.com/25123512/187547925-53292eb7-3ece-4846-b208-68e0fe302cac.png)
