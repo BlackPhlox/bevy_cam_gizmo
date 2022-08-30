@@ -1,24 +1,24 @@
 [package]
 name = "bevy_cam_gizmo"
 version = "0.1.0"
-authors = ["Aevyrie Roessler <aevyrie@gmail.com> & Black Phlox <bphlox@gmail.com>"]
+authors = ["Black Phlox <bphlox@gmail.com>"]
 edition = "2021"
 publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.8"
-bevy_mod_picking = "0.9"
-bevy_mod_raycast = "0.6"
+#bevy_mod_picking = "0.9"
+#bevy_mod_raycast = "0.6"
+bevy_dolly = { path = "../bevy_dolly" }
 
-[dev-dependencies]
-bevy = { version = "0.8", default-features = false, features = [
-    "render",
-    "bevy_render",
-    "bevy_winit",
-    "bevy_gltf",
-    "x11",
-    "jpeg",
-] }
+[dependencies.bevy]
+version = "0.8"
+features = ["render"]
+default-features = false
+
+[dev-dependencies.bevy]
+version = "0.8"
+features = ["bevy_asset", "bevy_scene", "bevy_winit", "bevy_gltf", "png"]
+default-features = false
 
