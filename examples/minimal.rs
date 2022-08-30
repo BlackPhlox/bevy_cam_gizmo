@@ -16,10 +16,16 @@ use bevy_mod_picking::{
 };
 
 #[derive(Component)]
-struct MainCamera;
+struct GizmoCamera;
 
 #[derive(Component)]
-struct M2Camera;
+struct MainCamera;
+
+#[derive(SystemLabel)]
+struct GizmoUpdate;
+
+#[derive(SystemLabel)]
+struct MainUpdate;
 
 fn main() {
     App::new()
@@ -27,13 +33,17 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(DefaultPickingPlugins)
         //.add_plugin(DollyCursorGrab)
-        .add_system(dolly_component_cam_change_detection::<MainCamera>.label("1"))//add_dolly_component(MainCamera)
-        .add_system(dolly_component_cam_change_detection::<M2Camera>.label("2").after("1"))//.add_dolly_component(M2Camera)
+        .add_system(dolly_component_cam_change_detection::<GizmoCamera>.label(GizmoUpdate))
+        .add_system(update_camera.after(GizmoUpdate).before(MainUpdate)) //add_dolly_component(MainCamera)
+        .add_system(
+            dolly_component_cam_change_detection::<MainCamera>
+                .label(MainUpdate)
+                .after(GizmoUpdate),
+        ) //.add_dolly_component(M2Camera)
+        .add_system(update_other_cam.after(MainUpdate))
         .add_state(Pan::Keys)
         .add_startup_system(setup)
         .add_system(set_camera_viewports)
-        .add_system(update_camera.after("1").before("2"))
-        .add_system(update_other_cam.after("2"))
         //.add_system(handle_picking_events)
         .run();
 }
@@ -49,7 +59,6 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
 ) {
     let cone_mesh = meshes.add(Mesh::from(Cone {
         height: 0.3,
@@ -189,7 +198,8 @@ fn setup(
                 .with(Arm::new(Vec3::Z * 4.0))
                 .build(),
         )
-        .insert(MainCamera).insert(M2Camera);
+        .insert(GizmoCamera)
+        .insert(MainCamera);
 
     let camera = Camera3dBundle {
         projection: PerspectiveProjection {
@@ -213,7 +223,7 @@ fn setup(
 
     commands
         .spawn_bundle(camera)
-        .insert(MainCamera)
+        .insert(GizmoCamera)
         .insert_bundle(PickingCameraBundle::default());
 
     // light
@@ -230,16 +240,18 @@ fn setup(
     });
 
     // camera
-    commands.spawn_bundle(Camera3dBundle {
-        transform: Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    }).insert(M2Camera);//.insert(MainCamera);
+    commands
+        .spawn_bundle(Camera3dBundle {
+            transform: Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        })
+        .insert(MainCamera);
 }
 
 fn set_camera_viewports(
     windows: Res<Windows>,
     mut resize_events: EventReader<WindowResized>,
-    mut right_camera: Query<&mut Camera, With<MainCamera>>,
+    mut right_camera: Query<&mut Camera, With<GizmoCamera>>,
 ) {
     for resize_event in resize_events.iter() {
         if resize_event.id == WindowId::primary() {
@@ -286,12 +298,12 @@ pub fn handle_picking_events(
 }
 
 fn update_other_cam(
-    mut query: ParamSet<(Query<(&mut Transform, With<M2Camera>)>, Query<&mut Rig>)>,
-){
+    mut query: ParamSet<(Query<(&mut Transform, With<MainCamera>)>, Query<&mut Rig>)>,
+) {
     let mut binding = query.p1();
     let mut a = binding.single_mut();
     let p = a.driver_mut::<Position>();
-    p.position = Vec3::new(0.,-5.,0.);
+    p.position = Vec3::new(0., -5., 0.);
 }
 
 #[allow(unused_must_use)]
@@ -299,7 +311,7 @@ fn update_camera(
     keys: Res<Input<KeyCode>>,
     mut pan: ResMut<State<Pan>>,
     mut mouse_motion_events: EventReader<MouseMotion>,
-    mut query: ParamSet<(Query<(&mut Transform, With<MainCamera>)>, Query<&mut Rig>)>,
+    mut query: ParamSet<(Query<(&mut Transform, With<GizmoCamera>)>, Query<&mut Rig>)>,
 ) {
     let mut p1 = query.p1();
     let mut rig = p1.single_mut();
@@ -326,7 +338,7 @@ fn update_camera(
     }
 
     let p = rig.driver_mut::<Position>();
-    p.position = Vec3::new(0.,0.,0.);
+    p.position = Vec3::new(0., 0., 0.);
 
     if keys.just_pressed(KeyCode::E) {
         let result = if pan.current().eq(&Pan::Keys) {

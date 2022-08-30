@@ -10,7 +10,7 @@ publish = false
 [dependencies]
 #bevy_mod_picking = "0.9"
 #bevy_mod_raycast = "0.6"
-bevy_dolly = { path = "../bevy_dolly" }
+bevy_dolly = { git="https://github.com/BlackPhlox/bevy_dolly" }
 
 [dependencies.bevy]
 version = "0.8"
