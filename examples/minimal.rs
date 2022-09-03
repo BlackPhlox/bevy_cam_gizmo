@@ -6,6 +6,7 @@ use bevy::render::camera::Viewport;
 use bevy::render::view::VisibleEntities;
 use bevy::window::{WindowId, WindowResized};
 use bevy::{input::mouse::MouseMotion, render::camera::ScalingMode};
+use bevy_cam_gizmo::CameraGizmo;
 use bevy_dolly::prelude::*;
 
 use bevy_dolly::helpers::cursor_grab::DollyCursorGrab;
@@ -32,6 +33,7 @@ fn main() {
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugins(DefaultPickingPlugins)
+        .add_plugin(CameraGizmo)
         //.add_plugin(DollyCursorGrab)
         .add_system(dolly_component_cam_change_detection::<GizmoCamera>.label(GizmoUpdate))
         .add_system(update_camera.after(GizmoUpdate).before(MainUpdate)) //add_dolly_component(MainCamera)
@@ -59,135 +61,8 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
-    let cone_mesh = meshes.add(Mesh::from(Cone {
-        height: 0.3,
-        radius: 0.1,
-        subdivisions: 32,
-    }));
-
-    let x_pos_mat = materials.add(StandardMaterial {
-        base_color: Color::rgba(1.0, 0.0, 0.0, 0.5),
-        unlit: true,
-        ..default()
-    });
-
-    let x_neg_mat = materials.add(StandardMaterial {
-        base_color: Color::rgba(1.0, 0.4, 0.4, 0.5),
-        unlit: true,
-        ..default()
-    });
-
-    let y_pos_mat = materials.add(StandardMaterial {
-        base_color: Color::rgba(0.0, 1.0, 0.0, 0.5),
-        unlit: true,
-        ..default()
-    });
-
-    let y_neg_mat = materials.add(StandardMaterial {
-        base_color: Color::rgba(0.4, 1.0, 0.4, 0.5),
-        unlit: true,
-        ..default()
-    });
-
-    let z_pos_mat = materials.add(StandardMaterial {
-        base_color: Color::rgba(0.0, 0.0, 1.0, 0.5),
-        unlit: true,
-        ..default()
-    });
-
-    let z_neg_mat = materials.add(StandardMaterial {
-        base_color: Color::rgba(0.4, 0.4, 1.0, 0.5),
-        unlit: true,
-        ..default()
-    });
-
-    commands
-        .spawn_bundle(SpatialBundle::from_transform(Transform {
-            rotation: Quat::IDENTITY,
-            translation: Vec3::new(0., -5., 0.),
-            ..default()
-        }))
-        .with_children(|cell| {
-            // +X
-            cell.spawn_bundle(PbrBundle {
-                mesh: cone_mesh.clone(),
-                material: x_pos_mat.clone(),
-                transform: Transform {
-                    rotation: Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
-                    translation: Vec3::new(0.3, 0., 0.),
-                    ..default()
-                },
-                ..default()
-            })
-            .insert_bundle(PickableBundle::default());
-
-            // -X
-            cell.spawn_bundle(PbrBundle {
-                mesh: cone_mesh.clone(),
-                material: x_neg_mat.clone(),
-                transform: Transform {
-                    rotation: Quat::from_rotation_z(-std::f32::consts::FRAC_PI_2),
-                    translation: Vec3::new(-0.3, 0., 0.),
-                    ..default()
-                },
-                ..default()
-            })
-            .insert_bundle(PickableBundle::default());
-
-            // +Y
-            cell.spawn_bundle(PbrBundle {
-                mesh: cone_mesh.clone(),
-                material: y_pos_mat.clone(),
-                transform: Transform {
-                    rotation: Quat::from_rotation_z(std::f32::consts::PI),
-                    translation: Vec3::new(0., 0.3, 0.),
-                    ..default()
-                },
-                ..default()
-            })
-            .insert_bundle(PickableBundle::default());
-
-            // -Y
-            cell.spawn_bundle(PbrBundle {
-                mesh: cone_mesh.clone(),
-                material: y_neg_mat.clone(),
-                transform: Transform {
-                    rotation: Quat::from_rotation_x(0.),
-                    translation: Vec3::new(0., -0.3, 0.),
-                    ..default()
-                },
-                ..default()
-            })
-            .insert_bundle(PickableBundle::default());
-
-            // +Z
-            cell.spawn_bundle(PbrBundle {
-                mesh: cone_mesh.clone(),
-                material: z_pos_mat.clone(),
-                transform: Transform {
-                    rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
-                    translation: Vec3::new(0., 0., 0.3),
-                    ..default()
-                },
-                ..default()
-            })
-            .insert_bundle(PickableBundle::default());
-
-            // -Z
-            cell.spawn_bundle(PbrBundle {
-                mesh: cone_mesh.clone(),
-                material: z_neg_mat.clone(),
-                transform: Transform {
-                    rotation: Quat::from_rotation_x(std::f32::consts::FRAC_PI_2),
-                    translation: Vec3::new(0., 0., -0.3),
-                    ..default()
-                },
-                ..default()
-            })
-            .insert_bundle(PickableBundle::default());
-        });
-
     commands
         .spawn()
         .insert(
@@ -220,6 +95,11 @@ fn setup(
         },
         ..default()
     };
+
+    commands.spawn_bundle(SceneBundle {
+        scene: asset_server.load("barge.glb#Scene0"),
+        ..default()
+    });
 
     commands
         .spawn_bundle(camera)

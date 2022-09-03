@@ -11,14 +11,12 @@ publish = false
 #bevy_mod_picking = "0.9"
 #bevy_mod_raycast = "0.6"
 bevy_dolly = { git="https://github.com/BlackPhlox/bevy_dolly" }
+bevy_mod_picking = "0.9"
 
 [dependencies.bevy]
 version = "0.8"
 features = ["render"]
 default-features = false
-
-[dev-dependencies]
-bevy_mod_picking = "0.9"
 
 [dev-dependencies.bevy]
 version = "0.8"
